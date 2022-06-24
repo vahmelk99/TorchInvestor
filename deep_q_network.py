@@ -137,7 +137,7 @@ class PokeDeepQNetwork(nn.Module):
 
         self.embeddings = nn.ModuleList([nn.Embedding(categories, size) for categories,size in get_embedding_sizes()])
         n_emb = sum(e.embedding_dim for e in self.embeddings) #length of all embeddings combined
-        print('input_dims', input_dims)
+      #  print('input_dims', input_dims)
         self.n_emb, self.n_cont = n_emb, input_dims[0] - POKEMON_CAT_LENGTH
 
         self.conv1_1 = nn.Conv1d(self.n_emb, 256, kernel_size=1)
@@ -179,28 +179,39 @@ class PokeDeepQNetwork(nn.Module):
 
     def forward(self, full_obs):
 
-        x_cat, x_cont = full_obs[:,0:POKEMON_CAT_LENGTH], full_obs[:,POKEMON_CAT_LENGTH:]
+        x_cat, x_cont = full_obs[:,0:POKEMON_CAT_LENGTH], full_obs[:,(POKEMON_CAT_LENGTH):]
+        print('a')
         x = [e(x_cat[:,i].int()) for i,e in enumerate(self.embeddings)]
-        print('x_cat shape(0)', x_cat.shape)
-        print('x_cont shape(0)', x_cont.shape)
+      #  print('x_cat shape(0)', x_cat.shape)
+      #  print('x_cont shape(0)', x_cont.shape)
+        print('b')
 
         combined_embedding_fields = torch.cat(x, 1)
-        print('combined_embedding_fields shape', combined_embedding_fields.shape)
-        print('combined_embedding_fields unsqueeze(0)', combined_embedding_fields.unsqueeze(0).shape)
-        print('combined_embedding_fields transpose(0)', combined_embedding_fields.transpose(1,0).shape)
-        print('combined_embedding_fields permute(0)', combined_embedding_fields.permute(1,0).shape)
-        print('combined_embedding_fields permute(1,0).unsqueeze(0)', combined_embedding_fields.permute(1,0).unsqueeze(0).shape)
-        print('combined_embedding_fields permute(1,0).unsqueeze(0)', combined_embedding_fields.permute(0,1).unsqueeze(0).shape)
+        print('c')
+      #  print('combined_embedding_fields shape', combined_embedding_fields.shape)
+      #  print('combined_embedding_fields unsqueeze(0)', combined_embedding_fields.unsqueeze(0).shape)
+      #  print('combined_embedding_fields transpose(0)', combined_embedding_fields.transpose(1,0).shape)
+      #  print('combined_embedding_fields permute(0)', combined_embedding_fields.permute(1,0).shape)
+      #  print('combined_embedding_fields permute(1,0).unsqueeze(0)', combined_embedding_fields.permute(1,0).unsqueeze(0).shape)
+      #  print('combined_embedding_fields permute(1,0).unsqueeze(0)', combined_embedding_fields.permute(0,1).unsqueeze(0).shape)
 #        conv = self.conv1_1(combined_embedding_fields.transpose(1, 0))
-        print('conv1_1 shape(0)', combined_embedding_fields.permute(1,0).unsqueeze(0).shape)
+      #  print('conv1_1 shape(0)', combined_embedding_fields.permute(1,0).unsqueeze(0).shape)
         conv = self.conv1_1(combined_embedding_fields.permute(1,0).unsqueeze(0))
+        print('d')
         print('conv1_2 shape(0)', conv.shape)
+        if(conv.shape[-1]==1):
+            conv=conv.repeat(conv.shape[0], conv.shape[0], 32)
+            print('conv1_2 shape(0)', conv.shape)
         conv = self.conv1_2(conv)
+        # print(conv.shape)
         print('max_1 shape(0)', conv.shape)
         conv = self.max_1(conv)
+        print(conv.shape)
         conv = self.conv1_3(conv)
+        print(conv.shape)
         conv = self.conv1_4(conv)
 #        conv = self.max_2(conv)
+        print(conv.shape)
         conv = self.conv1_5(conv)
         conv = self.conv1_6(conv)
         conv = self.glob_1(conv)
@@ -208,15 +219,15 @@ class PokeDeepQNetwork(nn.Module):
 
         conv = conv.view(conv.size()[0], -1)
 
-
+        # print(conv.shape)
         x = F.relu(self.categorical_dense(conv))
         y = F.relu(self.non_categorical_dense_1(x_cont))
         y = F.relu(self.non_categorical_dense_2(y))
         y = F.relu(self.non_categorical_dense_3(y))
 
-        print('x shape(0)', x.shape)
-        print('y shape(0)', y.shape)
-        z = torch.cat([x, y])
+        #print('x shape(0)', x.shape)
+        #print('y shape(0)', y.shape)
+        z = torch.cat([x, y[:-1]])
         print('z shape(0)', z.shape)
         #z = y
 
@@ -234,9 +245,9 @@ class PokeDeepQNetwork(nn.Module):
         return returnlogs
 
     def save_checkpoint(self):
-        print('... saving checkpoint ...')
+      #  print('... saving checkpoint ...')
         T.save(self.state_dict(), self.checkpoint_file)
 
     def load_checkpoint(self):
-        print('... loading checkpoinnt ...')
+      #  print('... loading checkpoinnt ...')
         self.load_state_dict(T.load(self.checkpoint_file))
