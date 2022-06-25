@@ -61,16 +61,7 @@ if __name__ == '__main__':
         observation, _, _, _ = env.reset()
 
         while not done:
-           # print(observation)
-            #input()
-            
-            # try:
             action = agent.choose_action(observation)
-            print(len(observation))                
-            # except:
-            #      print(observation,len(observation))
-            #      input()
-
             observation_, reward, done, info = env.step(action)
             score += reward
 
@@ -84,7 +75,7 @@ if __name__ == '__main__':
         steps_array.append(n_steps)
 
         avg_score = np.mean(scores[-100:])
-      #  print('episode ', i, 'score: ', score, 'average score %.1f best score %.1f epsiolon %.2f' % (avg_score, best_score, agent.epsilon), 'steps ', n_steps)
+        print('episode ', i, 'score: ', score, 'average score %.1f best score %.1f epsiolon %.2f' % (avg_score, best_score, agent.epsilon), 'steps ', n_steps)
         if avg_score > best_score:
             if not load_checkpoint:
                 agent.save_models()
