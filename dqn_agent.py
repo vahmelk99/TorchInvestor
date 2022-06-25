@@ -31,19 +31,13 @@ class PokeDQNAgent():
             name=self.env_name+'_'+self.algo+'_q_next', chkpt_dir=self.chkpt_dir)
 
     def choose_action(self, observation):
-        print( "START CHOOSE ACTION")
-        rans = np.random.random() 
-        if rans > self.epsilon:
-            print('THIS IS IF', self.epsilon, rans)
+        if np.random.random() > self.epsilon:
             state = T.tensor([observation], dtype=T.float32).to(self.q_eval.device)
-            print("STATES SHAPE ",state.shape)
             actions = self.q_eval.forward(state)
-            print(state, 'THIS IS STATE')
             action = T.argmax(actions).item()
         else:
-            print('RANDOM')
             action = np.random.choice(self.action_space)
-            print("ACTION ",action)
+
         return action
 
     def store_transition(self, state, action, reward, state_, done):
@@ -86,11 +80,9 @@ class PokeDQNAgent():
         states, actions, rewards, states_, dones = self.sample_memory()
 
         indices = np.arange(self.batch_size)
-        #print("states shape ",states.shape)
         q_pred = self.q_eval.forward(states)[indices, actions]
-      #  print( "HIIII",self.q_next.forward(states_).shape)
         q_next = self.q_next.forward(states_).max(dim=1)[0]
-      #  print(q_next, q_next.shape, dones.shape)
+
         q_next[dones] = 0.0
         q_target = rewards +self.gamma*q_next
 
